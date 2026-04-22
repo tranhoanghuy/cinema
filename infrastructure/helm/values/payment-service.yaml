@@ -1,0 +1,28 @@
+image:
+  repository: cinetix/cinetix-platform/payment-service
+  tag: "latest"
+
+service:
+  port: 8086
+
+grpc:
+  enabled: true
+  port: 9086
+
+extraEnv:
+  - name: SPRING_PROFILES_ACTIVE
+    value: k8s
+  - name: DB_HOST
+    value: postgres
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: payment_db
+  - name: RABBITMQ_HOST
+    value: rabbitmq
+  - name: KEYCLOAK_URL
+    value: http://keycloak:8080
+
+extraEnvFrom:
+  - secretRef:
+      name: payment-service-secrets

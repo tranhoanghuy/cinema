@@ -1,0 +1,268 @@
+name: Release — Build, Push & Bump Chart
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version without "v" prefix (e.g. 1.2.3)'
+        required: true
+        type: string
+
+env:
+  JAVA_VERSION: '21'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ── Resolve version ────────────────────────────────────────────────────────
+  resolve-version:
+    name: Resolve Release Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Parse version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            # Strip leading 'v' from tag name
+            TAG="${{ github.ref_name }}"
+            echo "value=${TAG#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Build Maven artifacts ──────────────────────────────────────────────────
+  build:
+    name: Build Artifacts
+    runs-on: ubuntu-latest
+    needs: resolve-version
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build all modules
+        run: ./mvnw install -DskipTests --no-transfer-progress -q
+
+      - name: Cache built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-build
+          path: |
+            ~/.m2/repository/com/cinetix
+            services/*/target/*.jar
+          retention-days: 1
+
+  # ── Build & push Docker images ─────────────────────────────────────────────
+  build-images:
+    name: Build & Push — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [resolve-version, build]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - booking-service
+          - showtime-service
+          - payment-service
+          - promotion-service
+          - identity-service
+          - movie-service
+          - cinema-service
+          - ticket-service
+          - notification-service
+          - chat-service
+          - api-gateway
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: maven-build
+          path: |
+            ~/.m2/repository/com/cinetix
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=raw,value=${{ needs.resolve-version.outputs.version }}
+            type=raw,value=latest
+            type=sha,prefix=,suffix=,format=short
+
+      - name: Resolve Dockerfile path
+        id: ctx
+        run: |
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            echo "context=frontend"   >> "$GITHUB_OUTPUT"
+            echo "file=frontend/Dockerfile" >> "$GITHUB_OUTPUT"
+          else
+            echo "context=."          >> "$GITHUB_OUTPUT"
+            echo "file=services/${{ matrix.service }}/Dockerfile" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.ctx.outputs.context }}
+          file: ${{ steps.ctx.outputs.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_VERSION=${{ needs.resolve-version.outputs.version }}
+
+  # ── Container security scan ────────────────────────────────────────────────
+  scan:
+    name: Trivy Scan — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [resolve-version, build-images]
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - booking-service
+          - showtime-service
+          - payment-service
+          - identity-service
+          - api-gateway
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: >-
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.resolve-version.outputs.version }}
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Upload scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif
+
+  # ── Bump Helm chart version ────────────────────────────────────────────────
+  bump-chart:
+    name: Bump Helm Chart Version
+    runs-on: ubuntu-latest
+    needs: [resolve-version, build-images]
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update chart versions
+        env:
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          CHART_FILE="infrastructure/helm/microservice/Chart.yaml"
+          if [ -f "$CHART_FILE" ]; then
+            sed -i "s/^version:.*/version: ${VERSION}/" "$CHART_FILE"
+            sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" "$CHART_FILE"
+          fi
+
+          # Update each per-service values appVersion
+          for f in infrastructure/helm/values/*.yaml; do
+            if [ -f "$f" ]; then
+              sed -i "s/tag: .*/tag: \"${VERSION}\"/" "$f"
+            fi
+          done
+
+      - name: Commit and push version bump
+        env:
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          git add infrastructure/helm/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit — chart already at version ${VERSION}"
+            exit 0
+          fi
+          git commit -m "chore(helm): bump chart to ${VERSION} [skip ci]"
+          git push origin main
+
+  # ── Create GitHub Release ──────────────────────────────────────────────────
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [resolve-version, build-images, scan]
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges | head -50)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges | head -50)
+          fi
+          {
+            echo "CHANGELOG<<EOF"
+            echo "$COMMITS"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: CineTix ${{ needs.resolve-version.outputs.version }}
+          body: |
+            ## Docker Images
+
+            All images published to `ghcr.io/${{ github.repository }}/<service>:${{ needs.resolve-version.outputs.version }}`
+
+            Services: `booking-service`, `showtime-service`, `payment-service`, `promotion-service`,
+            `identity-service`, `movie-service`, `cinema-service`, `ticket-service`,
+            `notification-service`, `chat-service`, `api-gateway`
+
+            ## Changes
+            ${{ env.CHANGELOG }}
+          draft: false
+          prerelease: ${{ contains(needs.resolve-version.outputs.version, '-') }}

@@ -1,0 +1,24 @@
+image:
+  repository: cinetix/cinetix-platform/notification-service
+  tag: "latest"
+
+service:
+  port: 8089
+
+extraEnv:
+  - name: SPRING_PROFILES_ACTIVE
+    value: k8s
+  - name: DB_HOST
+    value: postgres
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: notification_db
+  - name: RABBITMQ_HOST
+    value: rabbitmq
+  - name: KEYCLOAK_URL
+    value: http://keycloak:8080
+
+extraEnvFrom:
+  - secretRef:
+      name: notification-service-secrets

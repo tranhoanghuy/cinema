@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cinetix
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: CineTix microservices platform
+
+  sourceRepos:
+    - https://github.com/cinetix/cinetix-platform.git
+
+  destinations:
+    - namespace: cinetix
+      server: https://kubernetes.default.svc
+    - namespace: cinetix-staging
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: ReplicaSet
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Pod
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: Ingress
+
+  roles:
+    - name: admin
+      description: Full access to cinetix project
+      policies:
+        - p, proj:cinetix:admin, applications, *, cinetix/*, allow
+      groups:
+        - cinetix-admins
+
+    - name: readonly
+      description: Read-only access for monitoring
+      policies:
+        - p, proj:cinetix:readonly, applications, get, cinetix/*, allow
+      groups:
+        - cinetix-devs
+
+  orphanedResources:
+    warn: true

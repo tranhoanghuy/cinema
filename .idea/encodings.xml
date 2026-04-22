@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/READ.txt" charset="Shift_JIS" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-grpc-stubs/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-grpc-stubs/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-outbox/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-outbox/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-security/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/libs/cinetix-security/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/api-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/api-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/booking-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/booking-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/chat-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/chat-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/cinema-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/cinema-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/identity-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/identity-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/movie-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/movie-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/notification-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/notification-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/payment-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/payment-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/promotion-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/promotion-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/showtime-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/showtime-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/ticket-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/ticket-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

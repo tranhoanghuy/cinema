@@ -1,0 +1,32 @@
+image:
+  repository: cinetix/cinetix-platform/api-gateway
+  tag: "latest"
+
+service:
+  type: LoadBalancer
+  port: 8080
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 60
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+extraEnv:
+  - name: SPRING_PROFILES_ACTIVE
+    value: k8s
+  - name: REDIS_HOST
+    value: redis
+  - name: KEYCLOAK_URL
+    value: http://keycloak:8080
+
+extraEnvFrom:
+  - secretRef:
+      name: api-gateway-secrets

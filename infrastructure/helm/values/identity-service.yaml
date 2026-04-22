@@ -1,0 +1,22 @@
+image:
+  repository: cinetix/cinetix-platform/identity-service
+  tag: "latest"
+
+service:
+  port: 8081
+
+extraEnv:
+  - name: SPRING_PROFILES_ACTIVE
+    value: k8s
+  - name: DB_HOST
+    value: postgres
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: identity_db
+  - name: KEYCLOAK_URL
+    value: http://keycloak:8080
+
+extraEnvFrom:
+  - secretRef:
+      name: identity-service-secrets

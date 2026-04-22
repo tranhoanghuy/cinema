@@ -1,0 +1,152 @@
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/cinetix
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis_secret}
+
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]
+            allowedHeaders: "*"
+            allowCredentials: true
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_UNIQUE
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 50
+            redis-rate-limiter.burstCapacity: 100
+            redis-rate-limiter.requestedTokens: 1
+            key-resolver: "#{@ipKeyResolver}"
+
+      routes:
+        # Identity Service
+        - id: identity-service
+          uri: http://${IDENTITY_HOST:identity-service}:8081
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=0
+
+        # Movie Service
+        - id: movie-service
+          uri: http://${MOVIE_HOST:movie-service}:8084
+          predicates:
+            - Path=/api/v1/movies/**
+          filters:
+            - StripPrefix=0
+
+        # Cinema Service
+        - id: cinema-service
+          uri: http://${CINEMA_HOST:cinema-service}:8085
+          predicates:
+            - Path=/api/v1/cinemas/**
+          filters:
+            - StripPrefix=0
+
+        # Showtime Service
+        - id: showtime-service
+          uri: http://${SHOWTIME_HOST:showtime-service}:8083
+          predicates:
+            - Path=/api/v1/showtimes/**
+          filters:
+            - StripPrefix=0
+
+        # Showtime WebSocket
+        - id: showtime-ws
+          uri: ws://${SHOWTIME_HOST:showtime-service}:8083
+          predicates:
+            - Path=/ws/showtime/**
+          filters:
+            - StripPrefix=0
+
+        # Booking Service
+        - id: booking-service
+          uri: http://${BOOKING_HOST:booking-service}:8082
+          predicates:
+            - Path=/api/v1/bookings/**
+          filters:
+            - StripPrefix=0
+
+        # Payment Service
+        - id: payment-service
+          uri: http://${PAYMENT_HOST:payment-service}:8086
+          predicates:
+            - Path=/api/v1/payments/**
+          filters:
+            - StripPrefix=0
+
+        # Promotion Service
+        - id: promotion-service
+          uri: http://${PROMOTION_HOST:promotion-service}:8088
+          predicates:
+            - Path=/api/v1/promotions/**
+          filters:
+            - StripPrefix=0
+
+        # Ticket Service
+        - id: ticket-service
+          uri: http://${TICKET_HOST:ticket-service}:8087
+          predicates:
+            - Path=/api/v1/tickets/**
+          filters:
+            - StripPrefix=0
+
+        # Notification Service
+        - id: notification-service
+          uri: http://${NOTIFICATION_HOST:notification-service}:8089
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - StripPrefix=0
+
+        # Chat Service REST
+        - id: chat-service
+          uri: http://${CHAT_HOST:chat-service}:8090
+          predicates:
+            - Path=/api/v1/conversations/**
+          filters:
+            - StripPrefix=0
+
+        # Chat WebSocket
+        - id: chat-ws
+          uri: ws://${CHAT_HOST:chat-service}:8090
+          predicates:
+            - Path=/ws/chat/**
+          filters:
+            - StripPrefix=0
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  level:
+    com.cinetix: DEBUG
+    org.springframework.cloud.gateway: DEBUG

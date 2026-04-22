@@ -112,7 +112,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - prometheus
     networks:
@@ -178,6 +178,262 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ../../
+      dockerfile: services/payment-service/Dockerfile
+    container_name: cinetix-payment
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                payment_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      RABBITMQ_HOST:          rabbitmq
+      RABBITMQ_USER:          cinetix
+      RABBITMQ_PASS:          cinetix_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8086:8086"
+      - "9086:9086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  promotion-service:
+    build:
+      context: ../../
+      dockerfile: services/promotion-service/Dockerfile
+    container_name: cinetix-promotion
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                promotion_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      REDIS_HOST:             redis
+      REDIS_PASSWORD:         redis_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8088:8088"
+      - "9088:9088"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  identity-service:
+    build:
+      context: ../../
+      dockerfile: services/identity-service/Dockerfile
+    container_name: cinetix-identity
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                identity_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  movie-service:
+    build:
+      context: ../../
+      dockerfile: services/movie-service/Dockerfile
+    container_name: cinetix-movie
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                movie_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      REDIS_HOST:             redis
+      REDIS_PASSWORD:         redis_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  cinema-service:
+    build:
+      context: ../../
+      dockerfile: services/cinema-service/Dockerfile
+    container_name: cinetix-cinema
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                cinema_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  ticket-service:
+    build:
+      context: ../../
+      dockerfile: services/ticket-service/Dockerfile
+    container_name: cinetix-ticket
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                ticket_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      RABBITMQ_HOST:          rabbitmq
+      RABBITMQ_USER:          cinetix
+      RABBITMQ_PASS:          cinetix_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8087:8087"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ../../
+      dockerfile: services/notification-service/Dockerfile
+    container_name: cinetix-notification
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                notif_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      RABBITMQ_HOST:          rabbitmq
+      RABBITMQ_USER:          cinetix
+      RABBITMQ_PASS:          cinetix_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+      MAIL_HOST:              ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT:              ${MAIL_PORT:-587}
+      MAIL_USERNAME:          ${MAIL_USERNAME:-noreply@cinetix.vn}
+      MAIL_PASSWORD:          ${MAIL_PASSWORD:-}
+    ports:
+      - "8089:8089"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: ../../
+      dockerfile: services/chat-service/Dockerfile
+    container_name: cinetix-chat
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                chat_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      REDIS_HOST:             redis
+      REDIS_PASSWORD:         redis_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: cinetix-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE:    docker
+      REDIS_HOST:                redis
+      REDIS_PASSWORD:            redis_secret
+      KEYCLOAK_URL:              http://keycloak:8180
+      IDENTITY_HOST:             identity-service
+      MOVIE_HOST:                movie-service
+      CINEMA_HOST:               cinema-service
+      SHOWTIME_HOST:             showtime-service
+      BOOKING_HOST:              booking-service
+      PAYMENT_HOST:              payment-service
+      PROMOTION_HOST:            promotion-service
+      TICKET_HOST:               ticket-service
+      NOTIFICATION_HOST:         notification-service
+      CHAT_HOST:                 chat-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - identity-service
+      - movie-service
+      - cinema-service
+      - showtime-service
+      - booking-service
+      - payment-service
+      - promotion-service
+      - ticket-service
+      - notification-service
+      - chat-service
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: cinetix-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
     networks:
       - cinetix-net
     restart: unless-stopped

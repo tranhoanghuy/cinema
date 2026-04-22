@@ -1,0 +1,96 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cinetix-services
+  namespace: argocd
+spec:
+  # Sync policy for the ApplicationSet controller itself
+  syncPolicy:
+    preserveResourcesOnDeletion: false
+
+  generators:
+    - list:
+        elements:
+          - service: booking-service
+            namespace: cinetix
+            port: "8082"
+          - service: showtime-service
+            namespace: cinetix
+            port: "8083"
+          - service: payment-service
+            namespace: cinetix
+            port: "8086"
+          - service: promotion-service
+            namespace: cinetix
+            port: "8088"
+          - service: identity-service
+            namespace: cinetix
+            port: "8081"
+          - service: movie-service
+            namespace: cinetix
+            port: "8084"
+          - service: cinema-service
+            namespace: cinetix
+            port: "8085"
+          - service: ticket-service
+            namespace: cinetix
+            port: "8087"
+          - service: notification-service
+            namespace: cinetix
+            port: "8089"
+          - service: chat-service
+            namespace: cinetix
+            port: "8090"
+          - service: api-gateway
+            namespace: cinetix
+            port: "8080"
+
+  template:
+    metadata:
+      name: "cinetix-{{service}}"
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: cinetix-platform
+        app.kubernetes.io/name: "{{service}}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: cinetix
+
+      source:
+        repoURL: https://github.com/cinetix/cinetix-platform.git
+        targetRevision: HEAD
+        path: infrastructure/helm/microservice
+        helm:
+          releaseName: "{{service}}"
+          valueFiles:
+            - "../values/{{service}}.yaml"
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas   # HPA controls replicas — ArgoCD must not override
+
+      revisionHistoryLimit: 5

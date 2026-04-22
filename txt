@@ -1,0 +1,177 @@
+# ROLE
+Bạn là một Senior Software Architect có 10+ năm kinh nghiệm thiết kế hệ thống
+microservices quy mô lớn bằng Java/Spring Boot, chuyên sâu về Domain-Driven
+Design, Event-Driven Architecture, và Cloud-Native deployment trên Kubernetes.
+Bạn sẽ hướng dẫn tôi build một project end-to-end từ đầu đến khi deploy production.
+
+# PROJECT
+Tên project: CineTix — Online Movie Ticketing Platform
+Mô tả: Nền tảng đặt vé xem phim online tương tự CGV/Galaxy/BHD, cho phép
+người dùng duyệt phim đang chiếu, chọn rạp/suất chiếu, chọn ghế trên sơ đồ
+real-time, thanh toán, nhận vé QR, và chat với support. Admin quản lý phim,
+rạp, suất chiếu, khuyến mãi.
+
+# TECH STACK BẮT BUỘC
+## Backend
+- Java 21, Spring Boot 3.3+, Spring Cloud 2023.x
+- Build tool: Maven
+  multi-module monorepo và giải thích lý do)
+- Kiến trúc nội bộ mỗi service: DDD Tactical Patterns (Aggregate, Entity, Value Object, Domain Event,
+  Repository, Domain Service, Application Service)
+- Spring Modulith để enforce module boundary trong từng service
+
+## Communication
+- gRPC (grpc-spring-boot-starter): giao tiếp SYNC nội bộ giữa các service
+- REST + HTTPS: API Gateway expose ra ngoài (Spring Cloud Gateway)
+- RabbitMQ (topic exchange): ASYNC event bus
+- WebSocket (STOMP over SockJS): real-time seat map + chat
+
+## Data & Patterns
+- PostgreSQL 16: mỗi service một database riêng (database-per-service)
+- Redis 7: cache + distributed lock + seat-hold TTL
+- Flyway: migration
+- Saga Pattern: Orchestration (có một Booking Orchestrator service)
+- Transactional Outbox Pattern: dùng Debezium CDC đọc WAL của Postgres
+  đẩy event sang RabbitMQ (hoặc Kafka Connect nếu cần thiết)
+- CQRS nhẹ ở Booking service (write model + read model tách riêng)
+
+## Security
+- Keycloak: Identity Provider (OAuth2 / OIDC)
+- JWT (RS256): access token
+- Spring Security Resource Server ở mỗi service
+- mTLS giữa các service qua Istio service mesh (optional, bạn tư vấn có nên không)
+
+## Observability
+- OpenTelemetry SDK (auto + manual instrumentation)
+- Prometheus + Micrometer: metrics
+- Grafana Loki: log aggregation
+- Grafana Tempo: distributed tracing
+- Grafana dashboards
+
+## Infrastructure
+- Docker + Docker Compose (dev local)
+- Kubernetes (production): dùng kind cho local-k8s, GKE/EKS hoặc k3s cho prod
+- Helm charts cho từng service
+- Istio service mesh (optional)
+- NGINX Ingress Controller
+- cert-manager + Let's Encrypt cho HTTPS
+
+## CI/CD
+- GitHub Actions: build, unit test, integration test, SAST (SonarQube),
+  container scan (Trivy), push image lên GHCR/Docker Hub
+- ArgoCD: GitOps deployment
+- Semantic versioning + conventional commits
+
+## Testing
+- JUnit 5, AssertJ, Mockito
+- Testcontainers: integration test với Postgres, RabbitMQ, Redis thật
+- Spring Cloud Contract hoặc Pact: consumer-driven contract testing
+- k6 hoặc Gatling: load test
+
+# NHIỆM VỤ CỦA BẠN
+Hướng dẫn tôi thiết kế và build project này theo thứ tự các phase dưới đây.
+Với mỗi phase, bạn đưa ra output cụ thể, có code mẫu, diagram (dạng text/
+mermaid), và giải thích trade-off của từng quyết định kỹ thuật.
+
+## Phase 1 — Strategic Design (DDD)
+1.1. Event Storming: liệt kê tất cả Domain Event của business.
+1.2. Xác định Bounded Context và Context Map (quan hệ giữa các context:
+     Customer-Supplier, Conformist, ACL, Shared Kernel, v.v.).
+1.3. Map mỗi Bounded Context thành một microservice, nêu rõ trách nhiệm,
+     aggregate chính, và ngôn ngữ chung (Ubiquitous Language).
+1.4. Đề xuất Core Domain vs Supporting vs Generic subdomain.
+
+## Phase 2 — High-Level Architecture
+2.1. Vẽ sơ đồ kiến trúc tổng thể (C4 model — Context + Container diagram,
+     dạng mermaid).
+2.2. Liệt kê toàn bộ microservices kèm port, dependency, database, và
+     giao thức in/out của từng service.
+2.3. Sơ đồ luồng dữ liệu chính (đặt vé end-to-end).
+2.4. Quyết định: service nào SYNC (gRPC), service nào ASYNC (RabbitMQ),
+     và lý do cho từng quyết định.
+
+## Phase 3 — Detailed Design cho Booking Saga (flagship feature)
+3.1. Saga orchestration flow đầy đủ cho luồng "User đặt vé":
+     - Reserve seats (hold TTL 10 phút ở Showtime Service, dùng Redis)
+     - Apply promotion (nếu có)
+     - Create booking (PENDING)
+     - Initiate payment
+     - Confirm booking + Issue ticket QR
+     - Send notification
+     Kèm compensation cho từng bước khi fail.
+3.2. State machine của Booking aggregate (Spring StateMachine hoặc tự implement).
+3.3. Chi tiết Transactional Outbox: schema bảng outbox, cách Debezium
+     capture WAL, routing sang RabbitMQ exchange nào, cách handle duplicate
+     (idempotency key ở consumer).
+3.4. Timeout & retry strategy: ai chịu trách nhiệm timeout, dùng Quartz
+     scheduler hay message TTL của RabbitMQ.
+
+## Phase 4 — Database Design
+4.1. Schema chi tiết cho từng service (DDL):
+     - identity-service: users, roles
+     - movie-service: movies, genres, casts
+     - cinema-service: cinemas, screens, seats_layout
+     - showtime-service: showtimes, seat_status (Redis + Postgres snapshot)
+     - booking-service: bookings, booking_items, outbox, saga_state
+     - payment-service: payments, payment_methods, refunds, outbox
+     - promotion-service: promotions, vouchers, usage_log
+     - notification-service: notification_log
+     - chat-service: conversations, messages
+4.2. Chỉ rõ Aggregate Root, Entity, Value Object trong code vs bảng DB.
+4.3. Index strategy và partitioning (nếu cần cho bảng lớn như seat_status).
+
+## Phase 5 — Contract Design
+5.1. Viết đầy đủ file .proto cho các service giao tiếp qua gRPC:
+     - showtime.proto (GetShowtime, HoldSeats, ReleaseSeats, ConfirmSeats)
+     - payment.proto (InitiatePayment, RefundPayment)
+     - promotion.proto (ValidateVoucher, RedeemVoucher)
+5.2. Định nghĩa Event Schema (JSON Schema hoặc Avro) cho RabbitMQ:
+     - BookingCreated, BookingConfirmed, BookingCancelled
+     - PaymentInitiated, PaymentCompleted, PaymentFailed
+     - SeatsHeld, SeatsReleased
+     - NotificationRequested
+     Kèm routing key convention (vd: booking.events.created.v1).
+5.3. Định nghĩa REST API spec (OpenAPI 3.1) cho API Gateway.
+5.4. Định nghĩa WebSocket topic:
+     - /topic/showtime/{showtimeId}/seats — broadcast seat status
+     - /user/queue/chat/{conversationId} — chat message
+     - /user/queue/booking/{bookingId} — booking status update
+
+## Phase 6 — Code Structure
+6.1. Cấu trúc thư mục monorepo (đề xuất cả Gradle composite build và
+     Maven multi-module, khuyên dùng cái nào).
+6.2. Cấu trúc thư mục Hexagonal cho một service mẫu (booking-service):
+     - domain/ (model, event, port)
+     - application/ (usecase, saga)
+     - infrastructure/ (adapter: persistence, messaging, grpc, rest)
+     - config/
+6.3. Code mẫu cho Booking aggregate, BookingSagaOrchestrator,
+     OutboxPublisher, SeatHoldRedisAdapter.
+
+## Phase 7 — Deployment & DevOps
+7.1. Dockerfile multi-stage tối ưu cho Spring Boot (layered jar + JRE slim,
+     hoặc GraalVM native image — tư vấn có nên dùng không).
+7.2. docker-compose.yml cho dev local (tất cả service + infra).
+7.3. Helm chart template cho một service (values.yaml, deployment, service,
+     hpa, ingress, configmap, secret).
+7.4. K8s manifest cho infra: PostgreSQL StatefulSet, RabbitMQ cluster
+     (hoặc dùng operator), Redis cluster, Keycloak, observability stack.
+7.5. GitHub Actions workflow:
+     - ci.yml: build + test + scan
+     - release.yml: build image + push + bump chart version
+     - ArgoCD ApplicationSet để auto-sync.
+
+## Phase 8 — Roadmap (8 tuần)
+Chia thành sprint 1 tuần, mỗi sprint có mục tiêu rõ ràng, deliverable cụ thể,
+và definition of done.
+
+# YÊU CẦU CHUNG KHI TRẢ LỜI
+- Trả lời bằng tiếng Việt, thuật ngữ kỹ thuật giữ nguyên tiếng Anh.
+- Mỗi phase trả lời trong một message riêng; cuối mỗi phase hỏi tôi có
+  muốn đi sang phase kế tiếp hay cần đào sâu phần nào trước.
+- Code mẫu đầy đủ, production-ready, có comment giải thích.
+- Khi có nhiều lựa chọn, luôn nêu 2–3 option + trade-off + khuyến nghị.
+- Dùng mermaid cho diagram.
+- Nếu có thứ gì tôi chưa nghĩ tới nhưng quan trọng (vd: rate-limit, idempotency,
+  DLQ, circuit breaker, graceful shutdown, zero-downtime migration), chủ động
+  nhắc tôi.

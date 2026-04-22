@@ -1,0 +1,13 @@
+apiVersion: v2
+name: microservice
+description: Reusable Helm chart for CineTix microservices
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - cinetix
+  - microservice
+  - spring-boot
+home: https://github.com/cinetix/cinetix-platform
+maintainers:
+  - name: CineTix Team

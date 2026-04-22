@@ -1,7 +1,20 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: local
 
 scrape_configs:
+  - job_name: api-gateway
+    static_configs:
+      - targets: ['api-gateway:8080']
+    metrics_path: /actuator/prometheus
+
+  - job_name: identity-service
+    static_configs:
+      - targets: ['identity-service:8081']
+    metrics_path: /actuator/prometheus
+
   - job_name: booking-service
     static_configs:
       - targets: ['booking-service:8082']
@@ -12,7 +25,37 @@ scrape_configs:
       - targets: ['showtime-service:8083']
     metrics_path: /actuator/prometheus
 
+  - job_name: movie-service
+    static_configs:
+      - targets: ['movie-service:8084']
+    metrics_path: /actuator/prometheus
+
+  - job_name: cinema-service
+    static_configs:
+      - targets: ['cinema-service:8085']
+    metrics_path: /actuator/prometheus
+
   - job_name: payment-service
     static_configs:
       - targets: ['payment-service:8086']
+    metrics_path: /actuator/prometheus
+
+  - job_name: ticket-service
+    static_configs:
+      - targets: ['ticket-service:8087']
+    metrics_path: /actuator/prometheus
+
+  - job_name: promotion-service
+    static_configs:
+      - targets: ['promotion-service:8088']
+    metrics_path: /actuator/prometheus
+
+  - job_name: notification-service
+    static_configs:
+      - targets: ['notification-service:8089']
+    metrics_path: /actuator/prometheus
+
+  - job_name: chat-service
+    static_configs:
+      - targets: ['chat-service:8090']
     metrics_path: /actuator/prometheus

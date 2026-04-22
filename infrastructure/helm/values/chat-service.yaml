@@ -1,0 +1,24 @@
+image:
+  repository: cinetix/cinetix-platform/chat-service
+  tag: "latest"
+
+service:
+  port: 8090
+
+extraEnv:
+  - name: SPRING_PROFILES_ACTIVE
+    value: k8s
+  - name: DB_HOST
+    value: postgres
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: chat_db
+  - name: REDIS_HOST
+    value: redis
+  - name: KEYCLOAK_URL
+    value: http://keycloak:8080
+
+extraEnvFrom:
+  - secretRef:
+      name: chat-service-secrets
