@@ -1,0 +1,27 @@
+syntax = "proto3";
+package cinetix.common.v1;
+option java_package = "com.cinetix.grpc.common.v1";
+option java_multiple_files = true;
+import "google/protobuf/timestamp.proto";
+
+message Money {
+  int64  amount_minor = 1;
+  string currency     = 2;
+}
+
+message Error {
+  string code    = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+message PageRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message PageInfo {
+  int32 total_elements = 1;
+  int32 total_pages    = 2;
+  int32 current_page   = 3;
+}

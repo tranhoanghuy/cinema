@@ -1,0 +1,80 @@
+syntax = "proto3";
+package cinetix.payment.v1;
+option java_package = "com.cinetix.grpc.payment.v1";
+option java_multiple_files = true;
+import "google/protobuf/timestamp.proto";
+import "common/v1/common.proto";
+
+service PaymentService {
+  rpc InitiatePayment  (InitiatePaymentRequest)   returns (InitiatePaymentResponse);
+  rpc RefundPayment    (RefundPaymentRequest)      returns (RefundPaymentResponse);
+  rpc GetPaymentStatus (GetPaymentStatusRequest)   returns (GetPaymentStatusResponse);
+  rpc CancelPayment    (CancelPaymentRequest)      returns (CancelPaymentResponse);
+}
+
+message InitiatePaymentRequest {
+  string booking_id      = 1;
+  string customer_id     = 2;
+  cinetix.common.v1.Money amount = 3;
+  string method          = 4;
+  string idempotency_key = 5;
+  string return_url      = 6;
+  string ip_address      = 7;
+  string description     = 8;
+}
+message InitiatePaymentResponse {
+  oneof result {
+    InitiatePaymentSuccess success = 1;
+    cinetix.common.v1.Error error  = 2;
+  }
+}
+message InitiatePaymentSuccess {
+  string payment_id   = 1;
+  string payment_url  = 2;
+  string psp_provider = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+message RefundPaymentRequest {
+  string booking_id      = 1;
+  string payment_id      = 2;
+  cinetix.common.v1.Money refund_amount = 3;
+  string reason          = 4;
+  string idempotency_key = 5;
+  string requested_by    = 6;
+}
+message RefundPaymentResponse {
+  oneof result {
+    RefundPaymentSuccess success = 1;
+    cinetix.common.v1.Error error = 2;
+  }
+}
+message RefundPaymentSuccess {
+  string refund_id  = 1;
+  string status     = 2;
+  cinetix.common.v1.Money refund_amount = 3;
+}
+
+message GetPaymentStatusRequest {
+  string payment_id = 1;
+  string booking_id = 2;
+}
+message GetPaymentStatusResponse {
+  string payment_id      = 1;
+  string booking_id      = 2;
+  string status          = 3;
+  cinetix.common.v1.Money amount = 4;
+  string method          = 5;
+  string failure_reason  = 6;
+  google.protobuf.Timestamp completed_at = 7;
+}
+
+message CancelPaymentRequest {
+  string payment_id = 1;
+  string reason     = 2;
+}
+message CancelPaymentResponse {
+  bool   success = 1;
+  string status  = 2;
+  cinetix.common.v1.Error error = 3;
+}

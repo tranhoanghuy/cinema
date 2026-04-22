@@ -1,0 +1,183 @@
+version: "3.9"
+
+networks:
+  cinetix-net:
+    driver: bridge
+
+volumes:
+  postgres_data: {}
+  redis_data:    {}
+  rabbitmq_data: {}
+
+services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cinetix-postgres
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/create-databases.sh:/docker-entrypoint-initdb.d/init.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - cinetix-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cinetix-redis
+    command: >
+      redis-server
+      --requirepass redis_secret
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - cinetix-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_secret", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: cinetix-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER:  cinetix
+      RABBITMQ_DEFAULT_PASS:  cinetix_secret
+      RABBITMQ_DEFAULT_VHOST: /cinetix
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    networks:
+      - cinetix-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: cinetix-keycloak
+    command: start-dev
+    environment:
+      KC_DB:                    postgres
+      KC_DB_URL:                jdbc:postgresql://postgres:5432/keycloak_db
+      KC_DB_USERNAME:           postgres
+      KC_DB_PASSWORD:           postgres
+      KEYCLOAK_ADMIN:           admin
+      KEYCLOAK_ADMIN_PASSWORD:  admin
+      KC_HTTP_PORT:             8180
+      KC_HOSTNAME_STRICT:       "false"
+      KC_HTTP_ENABLED:          "true"
+    ports:
+      - "8180:8180"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+
+  # ── Observability ─────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: cinetix-prometheus
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - cinetix-net
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: cinetix-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - cinetix-net
+
+  # ── Application Services ──────────────────────────────────────────────────
+  booking-service:
+    build:
+      context: ../../
+      dockerfile: services/booking-service/Dockerfile
+    container_name: cinetix-booking
+    environment:
+      SPRING_PROFILES_ACTIVE:  docker
+      DB_HOST:                 postgres
+      DB_NAME:                 booking_db
+      DB_USER:                 postgres
+      DB_PASS:                 postgres
+      REDIS_HOST:              redis
+      REDIS_PASSWORD:          redis_secret
+      RABBITMQ_HOST:           rabbitmq
+      RABBITMQ_USER:           cinetix
+      RABBITMQ_PASS:           cinetix_secret
+      KEYCLOAK_URL:            http://keycloak:8180
+      SHOWTIME_GRPC_ADDRESS:   static://showtime-service:9083
+      PAYMENT_GRPC_ADDRESS:    static://payment-service:9086
+      PROMOTION_GRPC_ADDRESS:  static://promotion-service:9088
+    ports:
+      - "8082:8082"
+      - "9082:9082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped
+
+  showtime-service:
+    build:
+      context: ../../
+      dockerfile: services/showtime-service/Dockerfile
+    container_name: cinetix-showtime
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST:                postgres
+      DB_NAME:                showtime_db
+      DB_USER:                postgres
+      DB_PASS:                postgres
+      REDIS_HOST:             redis
+      REDIS_PASSWORD:         redis_secret
+      RABBITMQ_HOST:          rabbitmq
+      RABBITMQ_USER:          cinetix
+      RABBITMQ_PASS:          cinetix_secret
+      KEYCLOAK_URL:           http://keycloak:8180
+    ports:
+      - "8083:8083"
+      - "9083:9083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinetix-net
+    restart: unless-stopped

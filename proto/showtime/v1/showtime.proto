@@ -1,0 +1,105 @@
+syntax = "proto3";
+package cinetix.showtime.v1;
+option java_package = "com.cinetix.grpc.showtime.v1";
+option java_multiple_files = true;
+import "google/protobuf/timestamp.proto";
+import "common/v1/common.proto";
+
+service ShowtimeService {
+  rpc GetShowtime          (GetShowtimeRequest)          returns (GetShowtimeResponse);
+  rpc HoldSeats            (HoldSeatsRequest)            returns (HoldSeatsResponse);
+  rpc ReleaseSeats         (ReleaseSeatsRequest)         returns (ReleaseSeatsResponse);
+  rpc ConfirmSeats         (ConfirmSeatsRequest)         returns (ConfirmSeatsResponse);
+  rpc ForceReleaseByBooking(ForceReleaseByBookingRequest) returns (ReleaseSeatsResponse);
+}
+
+message GetShowtimeRequest  { string showtime_id = 1; }
+message GetShowtimeResponse {
+  oneof result {
+    ShowtimeDetail showtime = 1;
+    cinetix.common.v1.Error error = 2;
+  }
+}
+message ShowtimeDetail {
+  string showtime_id     = 1;
+  string movie_id        = 2;
+  string movie_title     = 3;
+  string cinema_id       = 4;
+  string cinema_name     = 5;
+  string screen_id       = 6;
+  string screen_name     = 7;
+  string format          = 8;
+  string audio_type      = 9;
+  google.protobuf.Timestamp start_time  = 10;
+  google.protobuf.Timestamp end_time    = 11;
+  string status          = 12;
+  int32  total_seats     = 13;
+  int32  available_seats = 14;
+  cinetix.common.v1.Money base_price   = 15;
+  cinetix.common.v1.Money vip_price    = 16;
+  cinetix.common.v1.Money couple_price = 17;
+}
+
+message HoldSeatsRequest {
+  string   showtime_id     = 1;
+  repeated string seat_ids = 2;
+  string   booking_id      = 3;
+  int32    ttl_seconds     = 4;
+  string   idempotency_key = 5;
+}
+message HoldSeatsResponse {
+  oneof result {
+    HoldSeatsSuccess success = 1;
+    HoldSeatsFailure failure = 2;
+  }
+}
+message HoldSeatsSuccess {
+  google.protobuf.Timestamp expires_at      = 1;
+  repeated SeatHoldDetail   held_seats      = 2;
+  int32                     remaining_seats = 3;
+}
+message HoldSeatsFailure {
+  cinetix.common.v1.Error   error             = 1;
+  repeated string           unavailable_seats = 2;
+}
+message SeatHoldDetail {
+  string seat_id   = 1;
+  string seat_code = 2;
+  string category  = 3;
+  cinetix.common.v1.Money price = 4;
+}
+
+message ReleaseSeatsRequest {
+  string          showtime_id = 1;
+  repeated string seat_ids    = 2;
+  string          booking_id  = 3;
+  string          reason      = 4;
+}
+message ReleaseSeatsResponse {
+  bool   success        = 1;
+  int32  released_count = 2;
+  cinetix.common.v1.Error error = 3;
+}
+
+message ConfirmSeatsRequest {
+  string          showtime_id     = 1;
+  repeated string seat_ids        = 2;
+  string          booking_id      = 3;
+  string          idempotency_key = 4;
+}
+message ConfirmSeatsResponse {
+  oneof result {
+    ConfirmSeatsSuccess success = 1;
+    cinetix.common.v1.Error error   = 2;
+  }
+}
+message ConfirmSeatsSuccess {
+  google.protobuf.Timestamp confirmed_at      = 1;
+  repeated string           confirmed_seat_ids = 2;
+}
+
+message ForceReleaseByBookingRequest {
+  string booking_id  = 1;
+  string showtime_id = 2;
+  string reason      = 3;
+}

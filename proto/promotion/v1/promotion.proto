@@ -1,0 +1,89 @@
+syntax = "proto3";
+package cinetix.promotion.v1;
+option java_package = "com.cinetix.grpc.promotion.v1";
+option java_multiple_files = true;
+import "google/protobuf/timestamp.proto";
+import "common/v1/common.proto";
+
+service PromotionService {
+  rpc ValidateVoucher     (ValidateVoucherRequest)     returns (ValidateVoucherResponse);
+  rpc RedeemVoucher       (RedeemVoucherRequest)       returns (RedeemVoucherResponse);
+  rpc VoidVoucher         (VoidVoucherRequest)         returns (VoidVoucherResponse);
+  rpc ListActivePromotions(ListActivePromotionsRequest) returns (ListActivePromotionsResponse);
+}
+
+message ValidateVoucherRequest {
+  string code        = 1;
+  string customer_id = 2;
+  cinetix.common.v1.Money order_amount = 3;
+  string showtime_id = 4;
+  string movie_id    = 5;
+  string cinema_id   = 6;
+  google.protobuf.Timestamp showtime_date = 7;
+}
+message ValidateVoucherResponse {
+  oneof result {
+    ValidateVoucherSuccess success = 1;
+    cinetix.common.v1.Error error  = 2;
+  }
+}
+message ValidateVoucherSuccess {
+  string voucher_id       = 1;
+  string promotion_id     = 2;
+  string promotion_name   = 3;
+  string discount_type    = 4;
+  int32  discount_percent = 5;
+  cinetix.common.v1.Money discount_amount = 6;
+  cinetix.common.v1.Money final_amount    = 7;
+  google.protobuf.Timestamp valid_until   = 8;
+}
+
+message RedeemVoucherRequest {
+  string code            = 1;
+  string voucher_id      = 2;
+  string customer_id     = 3;
+  string booking_id      = 4;
+  cinetix.common.v1.Money discount_applied = 5;
+  string idempotency_key = 6;
+}
+message RedeemVoucherResponse {
+  oneof result {
+    RedeemVoucherSuccess success = 1;
+    cinetix.common.v1.Error error = 2;
+  }
+}
+message RedeemVoucherSuccess {
+  string redemption_id = 1;
+  google.protobuf.Timestamp redeemed_at = 2;
+}
+
+message VoidVoucherRequest {
+  string voucher_id      = 1;
+  string booking_id      = 2;
+  string reason          = 3;
+  string idempotency_key = 4;
+}
+message VoidVoucherResponse {
+  bool   success = 1;
+  string status  = 2;
+  cinetix.common.v1.Error error = 3;
+}
+
+message ListActivePromotionsRequest {
+  string cinema_id = 1;
+  string movie_id  = 2;
+  string date      = 3;
+}
+message ListActivePromotionsResponse {
+  repeated PromotionSummary promotions = 1;
+}
+message PromotionSummary {
+  string id              = 1;
+  string name            = 2;
+  string description     = 3;
+  string discount_type   = 4;
+  int32  discount_percent = 5;
+  cinetix.common.v1.Money max_discount = 6;
+  cinetix.common.v1.Money min_order    = 7;
+  google.protobuf.Timestamp ends_at    = 8;
+}
