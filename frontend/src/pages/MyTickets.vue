@@ -16,13 +16,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ticketApi } from '@/api/tickets'
 import TicketCard from '@/components/ticket/TicketCard.vue'
 import Spinner    from '@/components/common/Spinner.vue'
+import type { Ticket } from '@/types'
 
-const tickets = ref([])
+const tickets = ref<Ticket[]>([])
 const loading = ref(true)
 
 onMounted(async () => {

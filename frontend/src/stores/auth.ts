@@ -1,29 +1,30 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import Keycloak from 'keycloak-js'
+import type { KeycloakUserInfo } from '@/types'
 
 const KC_CONFIG = {
-  url:   import.meta.env.VITE_KEYCLOAK_URL  || 'http://localhost:8180',
-  realm: import.meta.env.VITE_KEYCLOAK_REALM || 'cinetix',
+  url:      import.meta.env.VITE_KEYCLOAK_URL    || 'http://localhost:8180',
+  realm:    import.meta.env.VITE_KEYCLOAK_REALM  || 'cinetix',
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT || 'cinetix-frontend'
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const keycloak  = ref(null)
-  const token     = ref(null)
-  const userInfo  = ref(null)
-  const ready     = ref(false)
+  const keycloak = ref<Keycloak | null>(null)
+  const token    = ref<string | null | undefined>(null)
+  const userInfo = ref<KeycloakUserInfo | null>(null)
+  const ready    = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
-  const userId          = computed(() => keycloak.value?.subject || null)
-  const username        = computed(() => userInfo.value?.preferred_username || '')
-  const fullName        = computed(() => userInfo.value?.name || username.value)
+  const userId          = computed(() => keycloak.value?.subject ?? null)
+  const username        = computed(() => userInfo.value?.preferred_username ?? '')
+  const fullName        = computed(() => userInfo.value?.name ?? username.value)
   const isAdmin         = computed(() => {
-    const roles = keycloak.value?.realmAccess?.roles || []
+    const roles = keycloak.value?.realmAccess?.roles ?? []
     return roles.includes('ADMIN')
   })
 
-  async function init() {
+  async function init(): Promise<void> {
     const kc = new Keycloak(KC_CONFIG)
     keycloak.value = kc
 
@@ -35,8 +36,8 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       if (authenticated) {
-        token.value = kc.token
-        userInfo.value = await kc.loadUserInfo()
+        token.value    = kc.token
+        userInfo.value = await kc.loadUserInfo() as KeycloakUserInfo
         _scheduleRefresh()
       }
     } catch {
@@ -46,18 +47,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function login(redirectUri = window.location.href) {
+  function login(redirectUri = window.location.href): void {
     keycloak.value?.login({ redirectUri })
   }
 
-  function logout() {
-    token.value = null
+  function logout(): void {
+    token.value    = null
     userInfo.value = null
     keycloak.value?.logout({ redirectUri: window.location.origin })
   }
 
-  async function getToken() {
-    if (!keycloak.value) return null
+  async function getToken(): Promise<string | undefined> {
+    if (!keycloak.value) return undefined
     try {
       await keycloak.value.updateToken(30)
       token.value = keycloak.value.token
@@ -67,11 +68,11 @@ export const useAuthStore = defineStore('auth', () => {
     return keycloak.value.token
   }
 
-  function _scheduleRefresh() {
+  function _scheduleRefresh(): void {
     setInterval(async () => {
       try {
-        const refreshed = await keycloak.value.updateToken(60)
-        if (refreshed) token.value = keycloak.value.token
+        const refreshed = await keycloak.value!.updateToken(60)
+        if (refreshed) token.value = keycloak.value!.token
       } catch {
         logout()
       }

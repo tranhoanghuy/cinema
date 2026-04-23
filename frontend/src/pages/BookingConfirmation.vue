@@ -57,79 +57,59 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { bookingApi } from '@/api/bookings'
 import Spinner from '@/components/common/Spinner.vue'
+import type { Booking, BookingStatus } from '@/types'
 
 const route   = useRoute()
-const booking = ref(null)
+const booking = ref<Booking | null>(null)
 const loading = ref(true)
-let   pollTimer = null
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   await loadBooking()
-  // Poll for status changes while PENDING
   pollTimer = setInterval(async () => {
     if (booking.value?.status === 'PENDING_PAYMENT' || booking.value?.status === 'PROCESSING') {
       await loadBooking()
     } else {
-      clearInterval(pollTimer)
+      if (pollTimer) clearInterval(pollTimer)
     }
   }, 3000)
 })
 
-onUnmounted(() => clearInterval(pollTimer))
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
-async function loadBooking() {
+async function loadBooking(): Promise<void> {
   try {
-    booking.value = await bookingApi.getById(route.params.id)
+    booking.value = await bookingApi.getById(route.params.id as string)
   } finally {
     loading.value = false
   }
 }
 
-const statusIcon = computed(() => ({
-  CONFIRMED:       '✅',
-  PENDING_PAYMENT: '⏳',
-  PROCESSING:      '⏳',
-  CANCELLED:       '❌',
-  FAILED:          '❌'
-}[booking.value?.status] || '✅'))
+type StatusInfo = { icon: string; color: string; title: string; desc: string; textColor: string }
 
-const statusColor = computed(() => ({
-  CONFIRMED:       'bg-green-900/40',
-  PENDING_PAYMENT: 'bg-yellow-900/40',
-  PROCESSING:      'bg-yellow-900/40',
-  CANCELLED:       'bg-red-900/40',
-  FAILED:          'bg-red-900/40'
-}[booking.value?.status] || 'bg-green-900/40'))
+const statusMap: Record<BookingStatus, StatusInfo> = {
+  CONFIRMED:       { icon: '✅', color: 'bg-green-900/40',  title: 'Đặt vé thành công!',        desc: 'Vé của bạn đã được xác nhận. Kiểm tra E-Ticket bên dưới.', textColor: 'text-green-400' },
+  PENDING_PAYMENT: { icon: '⏳', color: 'bg-yellow-900/40', title: 'Đang chờ thanh toán',        desc: 'Vui lòng hoàn tất thanh toán trong vòng 15 phút.',          textColor: 'text-yellow-400' },
+  PROCESSING:      { icon: '⏳', color: 'bg-yellow-900/40', title: 'Đang xử lý...',              desc: 'Hệ thống đang xử lý đặt vé của bạn...',                     textColor: 'text-yellow-400' },
+  CANCELLED:       { icon: '❌', color: 'bg-red-900/40',    title: 'Đặt vé đã hủy',             desc: 'Đặt vé đã bị hủy. Ghế đã được giải phóng.',                 textColor: 'text-red-400' },
+  FAILED:          { icon: '❌', color: 'bg-red-900/40',    title: 'Đặt vé thất bại',           desc: 'Đã có lỗi xảy ra. Vui lòng thử lại.',                       textColor: 'text-red-400' }
+}
 
-const statusTitle = computed(() => ({
-  CONFIRMED:       'Đặt vé thành công!',
-  PENDING_PAYMENT: 'Đang chờ thanh toán',
-  PROCESSING:      'Đang xử lý...',
-  CANCELLED:       'Đặt vé đã hủy',
-  FAILED:          'Đặt vé thất bại'
-}[booking.value?.status] || 'Đặt vé thành công'))
+const currentStatus = computed<StatusInfo>(() =>
+  booking.value?.status ? statusMap[booking.value.status] : statusMap.CONFIRMED)
 
-const statusDesc = computed(() => ({
-  CONFIRMED:       'Vé của bạn đã được xác nhận. Kiểm tra E-Ticket bên dưới.',
-  PENDING_PAYMENT: 'Vui lòng hoàn tất thanh toán trong vòng 15 phút.',
-  PROCESSING:      'Hệ thống đang xử lý đặt vé của bạn...',
-  CANCELLED:       'Đặt vé đã bị hủy. Ghế đã được giải phóng.',
-  FAILED:          'Đã có lỗi xảy ra. Vui lòng thử lại.'
-}[booking.value?.status] || ''))
+const statusIcon      = computed(() => currentStatus.value.icon)
+const statusColor     = computed(() => currentStatus.value.color)
+const statusTitle     = computed(() => currentStatus.value.title)
+const statusDesc      = computed(() => currentStatus.value.desc)
+const statusTextColor = computed(() => currentStatus.value.textColor)
 
-const statusTextColor = computed(() => ({
-  CONFIRMED: 'text-green-400',
-  PENDING_PAYMENT: 'text-yellow-400',
-  CANCELLED: 'text-red-400',
-  FAILED: 'text-red-400'
-}[booking.value?.status] || 'text-gray-300'))
-
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
 </script>

@@ -50,7 +50,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
@@ -63,26 +63,25 @@ import { useSeatMap }  from '@/composables/useSeatMap'
 import { useBookingStore } from '@/stores/booking'
 import SeatMap from '@/components/seat/SeatMap.vue'
 import Spinner from '@/components/common/Spinner.vue'
+import type { Showtime } from '@/types'
 
-const route  = useRoute()
-const showtime  = ref(null)
-const posterUrl = ref(null)
-const loading   = ref(true)
-
-const seatMap      = useSeatMap(route.params.id)
+const route        = useRoute()
+const showtime     = ref<Showtime | null>(null)
+const posterUrl    = ref<string | null>(null)
+const loading      = ref(true)
+const seatMap      = useSeatMap(route.params.id as string)
 const bookingStore = useBookingStore()
 
 onMounted(async () => {
   try {
-    showtime.value = await showtimeApi.getById(route.params.id)
+    showtime.value = await showtimeApi.getById(route.params.id as string)
     bookingStore.setContext(showtime.value, null)
 
-    // Load seats and movie poster in parallel
     const [, movieData] = await Promise.all([
       seatMap.load(),
       movieApi.getById(showtime.value.movieId).catch(() => null)
     ])
-    if (movieData) posterUrl.value = movieData.posterUrl
+    if (movieData) posterUrl.value = movieData.posterUrl ?? null
 
     seatMap.connectWs()
   } finally {
@@ -90,7 +89,7 @@ onMounted(async () => {
   }
 })
 
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
 </script>

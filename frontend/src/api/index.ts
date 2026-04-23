@@ -6,9 +6,7 @@ const http = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
-// Attach Bearer token before every request
 http.interceptors.request.use(async config => {
-  // Lazy-import to avoid circular dependency with auth store
   const { useAuthStore } = await import('@/stores/auth')
   const auth = useAuthStore()
   if (auth.isAuthenticated) {
@@ -18,7 +16,6 @@ http.interceptors.request.use(async config => {
   return config
 })
 
-// Unwrap ApiResponse wrapper { data: { data: ... } }
 http.interceptors.response.use(
   res => res.data?.data !== undefined ? { ...res, data: res.data.data } : res,
   err => {

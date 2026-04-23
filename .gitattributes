@@ -1,0 +1,20 @@
+# Default: normalize line endings to LF in repository
+* text=auto eol=lf
+
+# Shell scripts must always be LF so they run inside Linux containers
+mvnw           text eol=lf
+*.sh           text eol=lf
+
+# Windows-only scripts can keep CRLF
+*.bat          text eol=crlf
+*.cmd          text eol=crlf
+
+# Binary files — no line-ending conversion
+*.jar          binary
+.mvn/wrapper/maven-wrapper.jar binary
+*.png          binary
+*.jpg          binary
+*.gif          binary
+*.ico          binary
+*.zip          binary
+*.gz           binary

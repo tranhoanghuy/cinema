@@ -10,6 +10,9 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.5.5.Final/mapstruct-1.5.5.Final.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.5.5.Final/mapstruct-1.5.5.Final.jar" />
         </processorPath>
         <module name="cinetix-outbox" />
         <module name="cinema-service" />
@@ -17,8 +20,8 @@
         <module name="chat-service" />
         <module name="movie-service" />
         <module name="notification-service" />
-        <module name="cinetix-grpc-stubs" />
         <module name="ticket-service" />
+        <module name="cinetix-grpc-stubs" />
         <module name="payment-service" />
         <module name="showtime-service" />
         <module name="booking-service" />

@@ -92,33 +92,33 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { bookingApi }   from '@/api/bookings'
+import { bookingApi }      from '@/api/bookings'
 import { useBookingStore } from '@/stores/booking'
 
 const router       = useRouter()
 const bookingStore = useBookingStore()
 
-const voucherCode    = ref('')
-const voucherApplied = ref(false)
+const voucherCode     = ref('')
+const voucherApplied  = ref(false)
 const applyingVoucher = ref(false)
-const voucherError   = ref('')
-const discount       = ref(0)
-const paymentMethod  = ref('VNPAY')
-const submitting     = ref(false)
-const submitError    = ref('')
+const voucherError    = ref('')
+const discount        = ref(0)
+const paymentMethod   = ref('VNPAY')
+const submitting      = ref(false)
+const submitError     = ref('')
 
 const paymentMethods = [
-  { value: 'VNPAY',         label: 'VNPay',         icon: '💳' },
-  { value: 'MOMO',          label: 'MoMo',          icon: '🟣' },
-  { value: 'ZALOPAY',       label: 'ZaloPay',       icon: '🔵' },
-  { value: 'BANK_TRANSFER', label: 'Ngân hàng',     icon: '🏦' }
+  { value: 'VNPAY',         label: 'VNPay',     icon: '💳' },
+  { value: 'MOMO',          label: 'MoMo',      icon: '🟣' },
+  { value: 'ZALOPAY',       label: 'ZaloPay',   icon: '🔵' },
+  { value: 'BANK_TRANSFER', label: 'Ngân hàng', icon: '🏦' }
 ]
 
-async function applyVoucher() {
+async function applyVoucher(): Promise<void> {
   if (!voucherCode.value.trim()) return
   applyingVoucher.value = true
   voucherError.value = ''
@@ -127,13 +127,14 @@ async function applyVoucher() {
     // The real validation calls PromotionService.validateVoucher via gRPC
     voucherApplied.value = true
   } catch (e) {
-    voucherError.value = e.message
+    voucherError.value = (e as Error).message
   } finally {
     applyingVoucher.value = false
   }
 }
 
-async function submitBooking() {
+async function submitBooking(): Promise<void> {
+  if (!bookingStore.showtime) return
   submitting.value = true
   submitError.value = ''
   try {
@@ -147,16 +148,16 @@ async function submitBooking() {
     bookingStore.reset()
     router.push({ name: 'BookingConfirmation', params: { id: booking.bookingId } })
   } catch (e) {
-    submitError.value = e.message
+    submitError.value = (e as Error).message
   } finally {
     submitting.value = false
   }
 }
 
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
-function formatCategory(cat) {
-  return { STANDARD: 'Thường', VIP: 'VIP', COUPLE: 'Couple' }[cat] || cat
+function formatCategory(cat: string): string {
+  return ({ STANDARD: 'Thường', VIP: 'VIP', COUPLE: 'Couple' } as Record<string, string>)[cat] ?? cat
 }
 </script>

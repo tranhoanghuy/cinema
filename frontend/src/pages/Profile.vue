@@ -73,21 +73,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { userApi }    from '@/api/users'
 import { bookingApi } from '@/api/bookings'
 import { ticketApi }  from '@/api/tickets'
 import { useAuthStore } from '@/stores/auth'
 import Spinner from '@/components/common/Spinner.vue'
+import type { UserProfile, PagedResponse, Booking, Ticket } from '@/types'
 
-const auth  = useAuthStore()
+const auth    = useAuthStore()
 const loading = ref(true)
 const saving  = ref(false)
 const saved   = ref(false)
 const error   = ref('')
 
-const form = ref({ displayName: '', phoneNumber: '', address: '', dateOfBirth: '', gender: '' })
+const form  = ref<UserProfile>({ displayName: '', phoneNumber: '', address: '', dateOfBirth: '', gender: '' })
 const stats = ref({ bookings: 0, tickets: 0, savedAmount: '0₫' })
 
 onMounted(async () => {
@@ -100,26 +101,28 @@ onMounted(async () => {
     if (profile.status === 'fulfilled' && profile.value) {
       const p = profile.value
       form.value = {
-        displayName:  p.displayName  || auth.fullName,
-        phoneNumber:  p.phoneNumber  || '',
-        address:      p.address      || '',
-        dateOfBirth:  p.dateOfBirth  || '',
-        gender:       p.gender       || ''
+        displayName: p.displayName || auth.fullName,
+        phoneNumber: p.phoneNumber || '',
+        address:     p.address     || '',
+        dateOfBirth: p.dateOfBirth || '',
+        gender:      p.gender      || ''
       }
     }
     if (myBookings.status === 'fulfilled') {
       const r = myBookings.value
-      stats.value.bookings = r.totalElements || (Array.isArray(r) ? r.length : 0)
+      stats.value.bookings = Array.isArray(r)
+        ? r.length
+        : (r as PagedResponse<Booking>).totalElements
     }
     if (myTickets.status === 'fulfilled') {
-      stats.value.tickets = myTickets.value?.filter(t => t.status === 'USED').length || 0
+      stats.value.tickets = (myTickets.value as Ticket[]).filter(t => t.status === 'USED').length
     }
   } finally {
     loading.value = false
   }
 })
 
-async function save() {
+async function save(): Promise<void> {
   saving.value = true
   error.value  = ''
   saved.value  = false
@@ -128,7 +131,7 @@ async function save() {
     saved.value = true
     setTimeout(() => { saved.value = false }, 3000)
   } catch (e) {
-    error.value = e.message
+    error.value = (e as Error).message
   } finally {
     saving.value = false
   }

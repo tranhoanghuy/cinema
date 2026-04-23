@@ -41,7 +41,7 @@ public class UserProfileController {
         @RequestBody UpdateProfileRequest req) {
         UUID userId = UUID.fromString(jwt.getSubject());
         UserProfile profile = userRepo.findById(userId)
-            .orElseThrow(() -> new com.cinetix.common.exception.ResourceNotFoundException("User not found", new Object()));
+            .orElseThrow(() -> new com.cinetix.common.exception.ResourceNotFoundException("User not found"));
         profile.update(req.fullName(), req.phone(), req.avatarUrl());
         userRepo.save(profile);
         return ResponseEntity.ok(ApiResponse.success(toDto(profile)));

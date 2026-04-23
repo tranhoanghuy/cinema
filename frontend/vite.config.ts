@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
   resolve: {
-    alias: { '@': resolve(__dirname, 'src') }
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
   },
   server: {
     port: 3000,
@@ -26,9 +26,9 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia'],
-          stomp: ['@stomp/stompjs', 'sockjs-client']
+        manualChunks(id) {
+          if (['vue', 'vue-router', 'pinia'].some(m => id.includes(`/node_modules/${m}/`))) return 'vendor'
+          if (['@stomp/stompjs', 'sockjs-client'].some(m => id.includes(`/node_modules/${m}/`))) return 'stomp'
         }
       }
     }

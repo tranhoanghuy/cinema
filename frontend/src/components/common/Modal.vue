@@ -23,18 +23,24 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-const props = defineProps({
-  modelValue: Boolean,
-  title:      String,
-  closable:   { type: Boolean, default: true },
-  size:       { type: String, default: 'md' }   // sm | md | lg | xl
+
+const props = withDefaults(defineProps<{
+  modelValue: boolean
+  title?: string
+  closable?: boolean
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+}>(), {
+  closable: true,
+  size: 'md'
 })
-defineEmits(['update:modelValue'])
+
+defineEmits<{ 'update:modelValue': [value: boolean] }>()
+
 const maxWidthClass = computed(() => ({
   sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-xl'
-}[props.size]))
+}[props.size!]))
 </script>
 
 <style scoped>

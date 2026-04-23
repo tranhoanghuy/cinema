@@ -86,41 +86,41 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { bookingApi } from '@/api/bookings'
 import Modal   from '@/components/common/Modal.vue'
 import Spinner from '@/components/common/Spinner.vue'
+import type { Booking, BookingStatus, PagedResponse } from '@/types'
 
-const bookings = ref([])
-const loading  = ref(true)
-const page     = ref(0)
-const hasMore  = ref(false)
-const activeTab = ref('')
-
+const bookings      = ref<Booking[]>([])
+const loading       = ref(true)
+const page          = ref(0)
+const hasMore       = ref(false)
+const activeTab     = ref<BookingStatus | ''>('')
 const showCancelModal = ref(false)
 const cancelling      = ref(false)
-const cancelTarget    = ref(null)
+const cancelTarget    = ref<Booking | null>(null)
 
-const tabs = [
-  { label: 'Tất cả',    value: '' },
-  { label: 'Đã xác nhận', value: 'CONFIRMED' },
+const tabs: { label: string; value: BookingStatus | '' }[] = [
+  { label: 'Tất cả',         value: '' },
+  { label: 'Đã xác nhận',    value: 'CONFIRMED' },
   { label: 'Chờ thanh toán', value: 'PENDING_PAYMENT' },
-  { label: 'Đã hủy',    value: 'CANCELLED' }
+  { label: 'Đã hủy',         value: 'CANCELLED' }
 ]
 
-async function loadPage(p) {
+async function loadPage(p: number): Promise<void> {
   loading.value = true
   try {
     const result = await bookingApi.listMine(p, 10, activeTab.value || undefined)
-    // Handle both paged and plain array responses
     if (Array.isArray(result)) {
       bookings.value = result
       hasMore.value  = false
     } else {
-      bookings.value = result.content || result
-      hasMore.value  = result.content?.length === 10
+      const paged = result as PagedResponse<Booking>
+      bookings.value = paged.content
+      hasMore.value  = paged.content.length === 10
       page.value     = p
     }
   } finally {
@@ -131,12 +131,12 @@ async function loadPage(p) {
 watch(activeTab, () => loadPage(0))
 onMounted(() => loadPage(0))
 
-function confirmCancel(booking) {
+function confirmCancel(booking: Booking): void {
   cancelTarget.value = booking
   showCancelModal.value = true
 }
 
-async function doCancel() {
+async function doCancel(): Promise<void> {
   if (!cancelTarget.value) return
   cancelling.value = true
   try {
@@ -148,28 +148,28 @@ async function doCancel() {
   }
 }
 
-function canCancel(status) {
+function canCancel(status: string): boolean {
   return ['PENDING_PAYMENT', 'PROCESSING'].includes(status)
 }
 
-function statusLabel(s) {
-  return {
+function statusLabel(s: string): string {
+  return ({
     CONFIRMED: 'Đã xác nhận', PENDING_PAYMENT: 'Chờ thanh toán',
     PROCESSING: 'Đang xử lý', CANCELLED: 'Đã hủy', FAILED: 'Thất bại'
-  }[s] || s
+  } as Record<string, string>)[s] ?? s
 }
 
-function statusBadge(s) {
-  return {
+function statusBadge(s: string): string {
+  return ({
     CONFIRMED:       'bg-green-900 text-green-300',
     PENDING_PAYMENT: 'bg-yellow-900 text-yellow-400',
     PROCESSING:      'bg-blue-900 text-blue-300',
     CANCELLED:       'bg-gray-700 text-gray-400',
     FAILED:          'bg-red-900 text-red-400'
-  }[s] || 'bg-gray-700 text-gray-400'
+  } as Record<string, string>)[s] ?? 'bg-gray-700 text-gray-400'
 }
 
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
 </script>

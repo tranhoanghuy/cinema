@@ -51,9 +51,12 @@
   </RouterLink>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-const props = defineProps({ movie: { type: Object, required: true } })
+import type { Movie } from '@/types'
+
+const props = defineProps<{ movie: Movie }>()
+
 const ageBadgeColor = computed(() => {
   const r = props.movie.ageRating
   if (r === 'C18') return 'bg-red-600 text-white'

@@ -5,13 +5,12 @@ import router from './router'
 import { useAuthStore } from './stores/auth'
 import './style.css'
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = createApp(App)
   const pinia = createPinia()
   app.use(pinia)
   app.use(router)
 
-  // Init Keycloak before mounting
   const auth = useAuthStore()
   await auth.init()
 

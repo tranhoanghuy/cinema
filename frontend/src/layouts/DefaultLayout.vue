@@ -80,21 +80,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 
-const auth        = useAuthStore()
-const router      = useRouter()
-const searchQ     = ref('')
+const auth         = useAuthStore()
+const router       = useRouter()
+const searchQ      = ref('')
 const dropdownOpen = ref(false)
-const dropdownRef  = ref(null)
+const dropdownRef  = ref<HTMLElement | null>(null)
 
 onClickOutside(dropdownRef, () => { dropdownOpen.value = false })
 
-function doSearch() {
+function doSearch(): void {
   if (!searchQ.value.trim()) return
   router.push({ name: 'Home', query: { q: searchQ.value.trim() } })
 }

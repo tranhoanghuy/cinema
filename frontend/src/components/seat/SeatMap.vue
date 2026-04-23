@@ -38,29 +38,32 @@
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
+import type { SeatStatus } from '@/types'
 
-const props = defineProps({
-  seatsByRow:  { type: Array,  required: true },   // [[row, SeatStatusDto[]]]
-  selectedIds: { type: Set,    default: () => new Set() }
+const props = withDefaults(defineProps<{
+  seatsByRow: [string, SeatStatus[]][]
+  selectedIds?: Map<string, SeatStatus>
+}>(), {
+  selectedIds: () => new Map<string, SeatStatus>()
 })
-const emit = defineEmits(['toggle'])
+
+defineEmits<{ toggle: [seat: SeatStatus] }>()
 
 const legend = [
-  { label: 'Trống',       color: 'bg-seat-available' },
-  { label: 'Đang chọn',   color: 'bg-seat-selected' },
-  { label: 'Đang giữ',    color: 'bg-seat-held' },
-  { label: 'Đã bán',      color: 'bg-seat-booked' },
-  { label: 'VIP',         color: 'bg-seat-vip' },
-  { label: 'Couple',      color: 'bg-seat-couple' }
+  { label: 'Trống',     color: 'bg-seat-available' },
+  { label: 'Đang chọn', color: 'bg-seat-selected' },
+  { label: 'Đang giữ',  color: 'bg-seat-held' },
+  { label: 'Đã bán',    color: 'bg-seat-booked' },
+  { label: 'VIP',       color: 'bg-seat-vip' },
+  { label: 'Couple',    color: 'bg-seat-couple' }
 ]
 
-function isSelectable(seat) {
+function isSelectable(seat: SeatStatus): boolean {
   return seat.status === 'AVAILABLE'
 }
 
-function seatClass(seat) {
+function seatClass(seat: SeatStatus): string {
   if (props.selectedIds.has(seat.seatId)) return 'bg-seat-selected text-white'
   if (seat.status === 'HELD')      return 'bg-seat-held text-black cursor-not-allowed opacity-60'
   if (seat.status === 'CONFIRMED') return 'bg-seat-booked text-gray-500 cursor-not-allowed'
@@ -69,15 +72,15 @@ function seatClass(seat) {
   return 'bg-seat-available/20 border border-seat-available text-seat-available hover:bg-seat-available hover:text-black'
 }
 
-function colNum(code) {
+function colNum(code: string): string {
   return code.replace(/\D/g, '')
 }
 
-function formatCategory(cat) {
-  return { STANDARD: 'Thường', VIP: 'VIP', COUPLE: 'Couple' }[cat] || cat
+function formatCategory(cat: string): string {
+  return ({ STANDARD: 'Thường', VIP: 'VIP', COUPLE: 'Couple' } as Record<string, string>)[cat] ?? cat
 }
 
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
 </script>

@@ -40,30 +40,31 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
+import type { Ticket } from '@/types'
 
-const props = defineProps({ ticket: { type: Object, required: true } })
+const props = defineProps<{ ticket: Ticket }>()
 
 const statusLabel = computed(() => ({
   ISSUED:  'Hợp lệ',
   USED:    'Đã dùng',
   EXPIRED: 'Hết hạn',
   VOIDED:  'Hủy'
-}[props.ticket.status] || props.ticket.status))
+}[props.ticket.status] ?? props.ticket.status))
 
 const statusBadge = computed(() => ({
   ISSUED:  'bg-green-900 text-green-300',
   USED:    'bg-gray-700 text-gray-400',
   EXPIRED: 'bg-yellow-900 text-yellow-400',
   VOIDED:  'bg-red-900 text-red-400'
-}[props.ticket.status] || 'bg-gray-700 text-gray-400'))
+}[props.ticket.status] ?? 'bg-gray-700 text-gray-400'))
 
-function formatDate(ts) {
+function formatDate(ts: string): string {
   return dayjs(ts).format('HH:mm — DD/MM/YYYY')
 }
-function formatPrice(p) {
+function formatPrice(p: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 }
 </script>

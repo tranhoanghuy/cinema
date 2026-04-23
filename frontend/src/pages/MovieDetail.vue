@@ -90,26 +90,27 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import { movieApi }    from '@/api/movies'
 import { showtimeApi } from '@/api/showtimes'
 import Spinner from '@/components/common/Spinner.vue'
+import type { Movie, Showtime } from '@/types'
 
-const route           = useRoute()
-const movie           = ref(null)
-const showtimes       = ref([])
-const loading         = ref(true)
+const route            = useRoute()
+const movie            = ref<Movie | null>(null)
+const showtimes        = ref<Showtime[]>([])
+const loading          = ref(true)
 const loadingShowtimes = ref(true)
 
 const groupedShowtimes = computed(() => {
-  const map = new Map()
+  const map = new Map<string, Showtime[]>()
   for (const st of showtimes.value) {
     if (st.movieId !== movie.value?.id) continue
     if (!map.has(st.cinemaName)) map.set(st.cinemaName, [])
-    map.get(st.cinemaName).push(st)
+    map.get(st.cinemaName)!.push(st)
   }
   return map
 })
@@ -117,7 +118,7 @@ const groupedShowtimes = computed(() => {
 onMounted(async () => {
   try {
     [movie.value, showtimes.value] = await Promise.all([
-      movieApi.getById(route.params.id),
+      movieApi.getById(route.params.id as string),
       showtimeApi.list()
     ])
   } finally {

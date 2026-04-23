@@ -39,12 +39,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { cinemaApi } from '@/api/cinemas'
 import Spinner from '@/components/common/Spinner.vue'
+import type { Cinema } from '@/types'
 
-const cinemas      = ref([])
+const cinemas      = ref<Cinema[]>([])
 const loading      = ref(true)
 const selectedCity = ref('')
 

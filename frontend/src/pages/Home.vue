@@ -51,21 +51,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { movieApi } from '@/api/movies'
 import MovieCard from '@/components/movie/MovieCard.vue'
 import Spinner   from '@/components/common/Spinner.vue'
+import type { Movie } from '@/types'
 
-const route        = useRoute()
-const nowShowing   = ref([])
-const comingSoon   = ref([])
-const searchResults = ref([])
-const loadingNow   = ref(true)
-const searching    = ref(false)
-const searchQuery  = computed(() => route.query.q || '')
-const heroMovie    = computed(() => nowShowing.value[0] || null)
+const route         = useRoute()
+const nowShowing    = ref<Movie[]>([])
+const comingSoon    = ref<Movie[]>([])
+const searchResults = ref<Movie[]>([])
+const loadingNow    = ref(true)
+const searching     = ref(false)
+const searchQuery   = computed(() => (route.query.q as string) || '')
+const heroMovie     = computed<Movie | null>(() => nowShowing.value[0] ?? null)
 
 onMounted(async () => {
   try {

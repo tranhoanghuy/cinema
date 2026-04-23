@@ -4,12 +4,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-const props = defineProps({
-  size: { type: String, default: 'md' },   // sm | md | lg
-  wrap: { type: Boolean, default: false }
+
+const props = withDefaults(defineProps<{
+  size?: 'sm' | 'md' | 'lg'
+  wrap?: boolean
+}>(), {
+  size: 'md',
+  wrap: false
 })
-const sizeClass = computed(() => ({ sm: 'w-5 h-5', md: 'w-8 h-8', lg: 'w-12 h-12' }[props.size]))
+
+const sizeClass = computed(() => ({ sm: 'w-5 h-5', md: 'w-8 h-8', lg: 'w-12 h-12' }[props.size!]))
 const wrapClass = computed(() => props.wrap ? 'py-16' : '')
 </script>
