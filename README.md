@@ -203,7 +203,7 @@ graph TB
 | **promotion-service** | 8088 | 9088 | promo_db | Khuyến mãi, voucher, mã giảm giá |
 | **ticket-service** | 8087 | — | ticket_db | Tạo vé QR, validate tại rạp |
 | **notification-service** | 8089 | — | notif_db | Email xác nhận đặt vé, receipt |
-| **chat-service** | 8090 | — | chat_db | Chat real-time khách hàng & support |
+| **chat-service** | 8099 | — | chat_db | Chat real-time khách hàng & support |
 
 ---
 

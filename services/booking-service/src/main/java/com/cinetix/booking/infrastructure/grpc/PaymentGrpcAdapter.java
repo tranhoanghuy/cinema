@@ -31,7 +31,7 @@ public class PaymentGrpcAdapter implements PaymentPort {
     public PaymentResult initiatePayment(BookingId bookingId, CustomerId customerId,
                                          Money amount, String method) {
         com.cinetix.grpc.common.v1.Money protoMoney = com.cinetix.grpc.common.v1.Money.newBuilder()
-                .setAmountMinor(amount.toLong())
+                .setAmountMinorUnits(amount.toLong())
                 .setCurrency("VND")
                 .build();
 

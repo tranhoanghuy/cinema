@@ -6,7 +6,17 @@
       "Bash(npx vite *)",
       "Bash(python3 -c ' *)",
       "Bash(wget -q -O .mvn/wrapper/maven-wrapper.jar https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar)",
-      "Bash(curl -L -o .mvn/wrapper/maven-wrapper.jar https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar)"
+      "Bash(curl -L -o .mvn/wrapper/maven-wrapper.jar https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar)",
+      "Bash(net stop *)",
+      "Bash(net start *)",
+      "Bash(docker network *)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); containers=data[0].get\\('Containers',{}\\); [print\\(v['Name'], v.get\\('IPv4Address',''\\)\\) for v in containers.values\\(\\)]\")",
+      "Bash(tasklist /fi \"imagename eq com.docker.backend.exe\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(docker compose *)",
+      "Bash(xargs grep *)",
+      "Bash(xargs ls *)",
+      "Bash(docker exec *)"
     ]
   }
 }

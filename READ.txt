@@ -630,7 +630,7 @@ end
           TICKET["ticket-service<br/>port: 8087<br/>Postgres: ticket_db<br/>?\ QR generation<br/>?\ Ticket validation"]
           PROMOTION["promotion-service<br/>port: 8088<br/>port: 9088 (gRPC)<br/>Postgres: promotion_db<br/>Redis: voucher_lock<br/>?\ Voucher engine"]
           NOTIF["notification-service<br/>port: 8089<br/>Postgres: notif_db<br/>?\ Email (SendGrid)<br/>?\ Push (FCM)"]
-          CHAT["chat-service<br/>port: 8090 (REST/WS)<br/>Postgres: chat_db<br/>Redis: presence_cache<br/>?\ STOMP/WebSocket<br/>?\ Message history"]
+          CHAT["chat-service<br/>port: 8099 (REST/WS)<br/>Postgres: chat_db<br/>Redis: presence_cache<br/>?\ STOMP/WebSocket<br/>?\ Message history"]
       end
 
       subgraph INFRA["? Infrastructure"]
@@ -6513,7 +6513,7 @@ services:
         TICKET_SERVICE_URL:     http://ticket-service:8087
         PROMOTION_SERVICE_URL:  http://promotion-service:8088
         NOTIF_SERVICE_URL:      http://notification-service:8089
-        CHAT_SERVICE_URL:       http://chat-service:8090
+        CHAT_SERVICE_URL:       http://chat-service:8099
       ports:
         - "8080:8080"
       depends_on:

@@ -7,6 +7,7 @@ import com.cinetix.booking.application.dto.query.BookingDetailDto;
 import com.cinetix.booking.domain.model.valueobject.SeatSelection;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -33,7 +34,7 @@ public class BookingRestMapper {
                                                                s.category(), s.price()))
                 .toList();
         return new BookingDetailResponse(dto.bookingId(), dto.status(), dto.movieTitle(),
-            dto.cinemaName(), dto.screenName(), dto.showtimeStart(), seats,
+            dto.cinemaName(), dto.screenName(), dto.showtimeStart(), (List<BookingDetailResponse.SeatDetail>) seats,
             dto.subtotal(), dto.discountAmount(), dto.finalAmount(), dto.currency(),
             dto.voucherCode(), dto.paymentMethod(), dto.paymentUrl(),
             dto.qrCodes(), dto.createdAt(), dto.expiresAt());

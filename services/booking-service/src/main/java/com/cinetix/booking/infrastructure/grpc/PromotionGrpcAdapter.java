@@ -33,7 +33,7 @@ public class PromotionGrpcAdapter implements PromotionPort {
     public VoucherResult validateVoucher(VoucherCode code, CustomerId customerId,
                                          Money orderAmount, ShowtimeId showtimeId) {
         com.cinetix.grpc.common.v1.Money protoMoney = com.cinetix.grpc.common.v1.Money.newBuilder()
-                .setAmountMinor(orderAmount.toLong())
+                .setAmountMinorUnits(orderAmount.toLong())
                 .setCurrency("VND")
                 .build();
 
@@ -53,8 +53,8 @@ public class PromotionGrpcAdapter implements PromotionPort {
             return VoucherResult.valid(
                     s.getVoucherId(),
                     s.getPromotionName(),
-                    Money.ofVnd(s.getDiscountAmount().getAmountMinor()),
-                    Money.ofVnd(s.getFinalAmount().getAmountMinor()));
+                    Money.ofVnd(s.getDiscountAmount().getAmountMinorUnits()),
+                    Money.ofVnd(s.getFinalAmount().getAmountMinorUnits()));
         } else {
             return VoucherResult.invalid(
                     response.getError().getCode(),

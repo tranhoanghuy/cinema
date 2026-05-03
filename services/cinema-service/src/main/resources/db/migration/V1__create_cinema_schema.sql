@@ -5,8 +5,8 @@ CREATE TABLE cinemas (
     city       VARCHAR(100) NOT NULL,
     district   VARCHAR(100),
     phone      VARCHAR(20),
-    latitude   NUMERIC(10,8),
-    longitude  NUMERIC(11,8),
+    latitude   DOUBLE PRECISION,
+    longitude  DOUBLE PRECISION,
     active     BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     CONSTRAINT cinemas_pkey PRIMARY KEY (id)

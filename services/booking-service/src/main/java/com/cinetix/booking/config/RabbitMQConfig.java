@@ -42,9 +42,9 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding paymentEventsBinding(Queue paymentEventsQueue, TopicExchange cinetixExchange) {
-        return BindingBuilder.bind(paymentEventsQueue)
-            .to(cinetixExchange)
+    public Binding paymentEventsBinding() {
+        return BindingBuilder.bind(paymentEventsQueue())
+            .to(cinetixExchange())
             .with(PAYMENT_BINDING);
     }
 

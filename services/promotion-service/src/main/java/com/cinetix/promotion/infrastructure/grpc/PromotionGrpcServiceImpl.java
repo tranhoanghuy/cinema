@@ -51,7 +51,7 @@ public class PromotionGrpcServiceImpl extends PromotionServiceGrpc.PromotionServ
 
         } catch (com.cinetix.common.exception.BusinessException e) {
             observer.onNext(ValidateVoucherResponse.newBuilder()
-                .setError(Error.newBuilder().setCode(e.getCode()).setMessage(e.getMessage()).build())
+                .setError(Error.newBuilder().setCode(e.getErrorCode()).setMessage(e.getMessage()).build())
                 .build());
             observer.onCompleted();
         } catch (Exception e) {
@@ -84,7 +84,7 @@ public class PromotionGrpcServiceImpl extends PromotionServiceGrpc.PromotionServ
 
         } catch (com.cinetix.common.exception.BusinessException e) {
             observer.onNext(RedeemVoucherResponse.newBuilder()
-                .setError(Error.newBuilder().setCode(e.getCode()).setMessage(e.getMessage()).build())
+                .setError(Error.newBuilder().setCode(e.getErrorCode()).setMessage(e.getMessage()).build())
                 .build());
             observer.onCompleted();
         } catch (Exception e) {

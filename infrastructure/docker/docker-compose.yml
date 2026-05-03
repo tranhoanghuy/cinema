@@ -298,7 +298,7 @@ services:
       DB_PASS:                postgres
       KEYCLOAK_URL:           http://keycloak:8180
     ports:
-      - "8085:8085"
+      - "18085:8085"
     depends_on:
       postgres:
         condition: service_healthy
@@ -322,7 +322,7 @@ services:
       RABBITMQ_PASS:          cinetix_secret
       KEYCLOAK_URL:           http://keycloak:8180
     ports:
-      - "8087:8087"
+      - "18086:8087"
     depends_on:
       postgres:
         condition: service_healthy
@@ -377,7 +377,7 @@ services:
       REDIS_PASSWORD:         redis_secret
       KEYCLOAK_URL:           http://keycloak:8180
     ports:
-      - "8090:8090"
+      - "8099:8099"
     depends_on:
       postgres:
         condition: service_healthy

@@ -29,8 +29,8 @@ public class RabbitMQConfig {
     @Bean Queue bookingEventsDlq() { return QueueBuilder.durable(BOOKING_DLQ).build(); }
 
     @Bean
-    Binding bookingBinding(Queue bookingEventsQueue, TopicExchange cinetixExchange) {
-        return BindingBuilder.bind(bookingEventsQueue).to(cinetixExchange).with(BOOKING_BIND);
+    Binding bookingBinding() {
+        return BindingBuilder.bind(bookingEventsQueue()).to(cinetixExchange()).with(BOOKING_BIND);
     }
 
     @Bean Jackson2JsonMessageConverter messageConverter() { return new Jackson2JsonMessageConverter(); }

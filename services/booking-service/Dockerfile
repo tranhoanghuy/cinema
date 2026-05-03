@@ -1,5 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
-RUN apk add --no-cache libc6-compat
+FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./

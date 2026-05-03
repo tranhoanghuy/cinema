@@ -26,8 +26,8 @@ public class RabbitMQConfig {
 
     @Bean Queue notificationDlq() { return QueueBuilder.durable(DLQ).build(); }
 
-    @Bean Binding notificationBinding(Queue notificationQueue, TopicExchange cinetixExchange) {
-        return BindingBuilder.bind(notificationQueue).to(cinetixExchange).with(BIND);
+    @Bean Binding notificationBinding() {
+        return BindingBuilder.bind(notificationQueue()).to(cinetixExchange()).with(BIND);
     }
 
     @Bean Jackson2JsonMessageConverter messageConverter() { return new Jackson2JsonMessageConverter(); }

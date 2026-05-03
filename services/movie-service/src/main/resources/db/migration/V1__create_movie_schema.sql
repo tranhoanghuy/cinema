@@ -15,7 +15,7 @@ CREATE TABLE movies (
     director         VARCHAR(200),
     cast_list        TEXT,
     age_rating       VARCHAR(10),
-    imdb_score       NUMERIC(3,1),
+    imdb_score       DOUBLE PRECISION,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     CONSTRAINT movies_pkey PRIMARY KEY (id),
